@@ -1,4 +1,4 @@
-let { addNumbers } = require("./MergeOverlap.js");
+let { updateTimeFrames } = require("./MergeOverlap.js");
 const dayjs = require("dayjs");
 
 function calculateWorkExperience(timeframes) {
@@ -51,13 +51,15 @@ function parseDate(dateStr) {
 }
 
 const timeframes = [
+  ["01/01/2558", "31/12/2560"],
   ["01/01/2555", "31/12/2555"],
+  ["01/12/2559", "31/12/2559"],
   ["01/06/2556", "31/12/2556"],
-  ["01/06/2557", "31/12/2560"],
+  ["01/06/2557", "31/05/2558"],
 ];
+
+// merge overlap timefram first
+updateTimeFrames(timeframes);
 
 const totalExperience = calculateWorkExperience(timeframes);
 console.log("Total Work Experience:", totalExperience);
-
-const result = addNumbers(5, 7);
-console.log(result); // Output: 12

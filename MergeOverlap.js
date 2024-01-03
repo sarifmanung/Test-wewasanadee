@@ -1,69 +1,46 @@
-const { parse, format, differenceInCalendarDays } = require("date-fns");
+const { parse, format } = require("date-fns");
 
-function mergeDateRanges(ranges) {
-  const flatRanges = ranges.flatMap((range) => [
-    { date: range[0], type: "start" },
-    { date: range[1], type: "end" },
-  ]);
-
-  flatRanges.sort((a, b) =>
-    differenceInCalendarDays(
-      parse(a.date, "dd/MM/yyyy", new Date()),
-      parse(b.date, "dd/MM/yyyy", new Date())
-    )
+function areRangesOverlapping(startDate1, endDate1, startDate2, endDate2) {
+  return (
+    (startDate1 <= endDate2 && startDate2 <= endDate1) ||
+    (startDate2 <= endDate1 && startDate1 <= endDate2)
   );
+}
 
-  let mergedRanges = [];
-  let openCount = 0;
-  let currentStartDate = null;
+function mergeRanges(startDate1, endDate1, startDate2, endDate2) {
+  const mergedStartDate = startDate1 < startDate2 ? startDate1 : startDate2;
+  const mergedEndDate = endDate1 > endDate2 ? endDate1 : endDate2;
+  return [
+    format(mergedStartDate, "dd/MM/yyyy"),
+    format(mergedEndDate, "dd/MM/yyyy"),
+  ];
+}
 
-  for (const range of flatRanges) {
-    if (range.type === "start") {
-      if (openCount === 0) {
-        currentStartDate = parse(range.date, "dd/MM/yyyy", new Date());
-      }
-      openCount++;
-    } else {
-      openCount--;
-      if (openCount === 0) {
-        const currentEndDate = parse(range.date, "dd/MM/yyyy", new Date());
-        if (
-          !areRangesOverlapping(currentStartDate, currentEndDate, mergedRanges)
-        ) {
-          mergedRanges.push([
-            format(currentStartDate, "dd/MM/yyyy"),
-            format(currentEndDate, "dd/MM/yyyy"),
-          ]);
-        } else {
-          console.log("Ranges overlap, no merge performed.");
-        }
-        currentStartDate = null;
+exports.updateTimeFrames = async function (timeFrames) {
+  for (let i = 0; i < timeFrames.length - 1; i++) {
+    const [startDate1, endDate1] = timeFrames[i].map((date) =>
+      parse(date, "dd/MM/yyyy", new Date())
+    );
+
+    for (let j = i + 1; j < timeFrames.length; j++) {
+      const [startDate2, endDate2] = timeFrames[j].map((date) =>
+        parse(date, "dd/MM/yyyy", new Date())
+      );
+
+      if (areRangesOverlapping(startDate1, endDate1, startDate2, endDate2)) {
+        const mergedRange = mergeRanges(
+          startDate1,
+          endDate1,
+          startDate2,
+          endDate2
+        );
+        timeFrames.splice(i, 1, mergedRange); // Replace the first overlapping range with the merged range
+        timeFrames.splice(j, 1); // Remove the second overlapping range
+        i--; // Adjust the loop index
+        break; // Exit the inner loop after the replacement
       }
     }
   }
 
-  return mergedRanges[0] || null;
-}
-
-function areRangesOverlapping(startDate, endDate, ranges) {
-  return ranges.some((range) => {
-    const [rangeStart, rangeEnd] = range.map((date) =>
-      parse(date, "dd/MM/yyyy", new Date())
-    );
-    return (
-      (startDate >= rangeStart && startDate <= rangeEnd) ||
-      (endDate >= rangeStart && endDate <= rangeEnd) ||
-      (startDate <= rangeStart && endDate >= rangeEnd)
-    );
-  });
-}
-
-const ranges1 = ["01/01/2558", "31/12/2560"];
-const ranges2 = ["01/06/2557", "31/05/2558"];
-
-const mergedRanges = mergeDateRanges([ranges1, ranges2]);
-console.log(mergedRanges);
-
-exports.addNumbers = function (a, b) {
-  return a + b;
+  return timeFrames;
 };
