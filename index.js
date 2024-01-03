@@ -1,3 +1,4 @@
+let { addNumbers } = require("./MergeOverlap.js");
 const dayjs = require("dayjs");
 
 function calculateWorkExperience(timeframes) {
@@ -92,3 +93,8 @@ const timeframes = [
 
 const totalExperience = calculateWorkExperience(timeframes);
 console.log("Total Work Experience:", totalExperience);
+
+// anotherFile.js
+
+const result = addNumbers(5, 7);
+console.log(result); // Output: 12
